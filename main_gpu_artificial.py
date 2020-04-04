@@ -695,7 +695,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
         img_dir=os.path.join(
             "C:\\Users\\HUYVU\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\huyvu\\gauss_batch"
         ), filetype=opt.filetype,
-        transform=transforms.Compose([standardize(normalize=False), ToTensor()]),
+        transform=transforms.Compose([standardize(normalize=False, filetype=opt.filetype), ToTensor()]),
         subset=subset,
     )
     dataloader = DataLoader(
