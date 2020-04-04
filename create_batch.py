@@ -1,4 +1,5 @@
-from proxgtv.proxgtv import *
+#from proxgtv.proxgtv import *
+from main_gpu_artificial import *
 import os
 import argparse
 import numpy as np
