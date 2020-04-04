@@ -149,11 +149,12 @@ class RENOIR_Dataset2(Dataset):
             idx = idx.tolist()
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
         if self.filetype=="npy":
+            print(nimg_name)
             nimg = np.load(nimg_name)
+            print(nimg)
         else:
             nimg = cv2.imread(nimg_name)
-        if self.filetype=='npy':
-            print(nimg)
+
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
