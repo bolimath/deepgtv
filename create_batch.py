@@ -196,7 +196,7 @@ class standardize2(object):
 
     def __call__(self, sample):
         nimg, rimg, nn, rn = sample['nimg'], sample['rimg'], sample['nn'], sample['rn']
-        if filetype=='npy':
+        if self.filetype=='npy':
             print(nimg)
         if self.scale:
             nimg = cv2.resize(nimg, (0, 0), fx=self.scale, fy=self.scale)
