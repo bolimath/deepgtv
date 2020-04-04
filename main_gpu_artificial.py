@@ -180,12 +180,13 @@ class RENOIR_Dataset(Dataset):
     Dataset loader
     """
 
-    def __init__(self, img_dir, transform=None, subset=None):
+    def __init__(self, img_dir, transform=None, subset=None, filetype='bmp'):
         """
         Args:
             img_dir (string): Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.filetype=filetype
         self.img_dir = img_dir
         self.npath = os.path.join(img_dir, "noisy")
         self.rpath = os.path.join(img_dir, "ref")
@@ -195,13 +196,13 @@ class RENOIR_Dataset(Dataset):
         self.nimg_name = [
             i
             for i in self.nimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         self.rimg_name = [
             i
             for i in self.rimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         if self.subset:
@@ -226,7 +227,10 @@ class RENOIR_Dataset(Dataset):
             idx = idx.tolist()
 
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
-        nimg = cv2.imread(nimg_name)
+        if self.filetype=="npy":
+            nimg = np.load(nimg_name)
+        else:
+            nimg = cv2.imread(nimg_name)
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
@@ -241,7 +245,7 @@ class RENOIR_Dataset(Dataset):
 class standardize(object):
     """Convert opencv BGR to RGB order. Scale the image with a ratio"""
 
-    def __init__(self, scale=None, w=None, normalize=None):
+    def __init__(self, scale=None, w=None, normalize=None, filetype="bmp"):
         """
         Args:
         scale (float): resize height and width of samples to scale*width and scale*height
@@ -250,6 +254,7 @@ class standardize(object):
         self.scale = scale
         self.w = w
         self.normalize = normalize
+        self.filetype=filetype
 
     def __call__(self, sample):
         nimg, rimg = sample["nimg"], sample["rimg"]
@@ -263,26 +268,13 @@ class standardize(object):
         if self.normalize:
             nimg = cv2.resize(nimg, (0, 0), fx=1, fy=1)
             rimg = cv2.resize(rimg, (0, 0), fx=1, fy=1)
-        nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        if self.filetype!="npy":
+            nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
             rimg = rimg / 255
         return {"nimg": nimg, "rimg": rimg}
-
-
-class gaussian_noise_(object):
-    def __init__(self, stddev, mean):
-        self.stddev = stddev
-        self.mean = mean
-
-    def __call__(self, sample):
-        nimg, rimg = sample["rimg"], sample["rimg"]
-        noise = Variable(nimg.data.new(nimg.size()).normal_(self.mean, self.stddev))
-        nimg = nimg + noise
-        nimg = _norm(nimg, 0, 255)
-        return {"nimg": nimg, "rimg": rimg}
-
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
