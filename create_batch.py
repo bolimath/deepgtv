@@ -308,6 +308,8 @@ def _main(imgw=324):
             img = T1[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
             img = img.transpose(1, 2, 0)
             if filetype=='npy':
+                if img.min()<0:
+                    print("IMG MIN < 0")
                 np.save('{0}\\{1}_{2}.npy'.format(noisyp, nnn,i), img )
             else:
                 plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
