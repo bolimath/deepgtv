@@ -177,7 +177,8 @@ class ToTensor2(object):
 class standardize2(object):
     """Convert opencv BGR to RGB order. Scale the image with a ratio"""
 
-    def __init__(self, scale=None, w=None, normalize=None):
+    
+    def __init__(self, scale=None, w=None, normalize=None, filetype="bmp"):
         """
         Args:
         scale (float): resize height and width of samples to scale*width and scale*height
@@ -186,6 +187,8 @@ class standardize2(object):
         self.scale = scale
         self.w = w
         self.normalize = normalize
+        self.filetype=filetype
+
 
     def __call__(self, sample):
         nimg, rimg, nn, rn = sample['nimg'], sample['rimg'], sample['nn'], sample['rn']
@@ -199,7 +202,8 @@ class standardize2(object):
         if self.normalize:
             nimg = cv2.resize(nimg, (0, 0), fx=1, fy=1)
             rimg = cv2.resize(rimg, (0, 0), fx=1, fy=1)
-        nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        if self.filetype!="npy":
+            nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
