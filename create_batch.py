@@ -151,9 +151,7 @@ class RENOIR_Dataset2(Dataset):
         if self.filetype=="npy":
             print(nimg_name)
             nimg = np.load(nimg_name)
-            print(nimg)
         else:
-            print('read cv2')
             nimg = cv2.imread(nimg_name)
 
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
@@ -278,7 +276,7 @@ def _main(imgw=324):
         bm3d_res['mse'].append(_mse)
     print("MEAN BM3D PSNR, MSE:", np.mean(bm3d_res['psnr']), np.mean(bm3d_res['mse']))
     filetype='npy'
-    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\',
+    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\', filetype=filetype
                              transform = transforms.Compose([standardize2(filetype=filetype),
                                                 ToTensor2()])
                             )
