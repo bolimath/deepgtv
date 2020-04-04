@@ -87,7 +87,6 @@ def main(t):
     tref = cv2.imread(argref)
     (score, diff) = compare_ssim(tref, d, full=True, multichannel=True)
     psnr2 = cv2.PSNR(tref, d)
-    print('#######################') 
     print('CV2 PSNR, SSIM: {:.2f}, {:.2f}'.format( psnr2, score))
     print('#######################') 
     print('')
@@ -280,7 +279,7 @@ def _main(imgw=324):
                                                 ToTensor2()])
                             )
     dataloader = DataLoader(dataset, batch_size=1,
-                            shuffle=True, num_workers=1)
+                            shuffle=False, num_workers=1)
     print(dataset.nimg_name)
     # rm -r gauss_batch
     # mkdir gauss_batch
