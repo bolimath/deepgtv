@@ -107,6 +107,7 @@ class RENOIR_Dataset2(Dataset):
             img_dir (string): Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.filetype=filetype
         self.img_dir = img_dir
         self.npath = os.path.join(img_dir, "noisy")
         self.rpath = os.path.join(img_dir, "ref")
@@ -116,13 +117,13 @@ class RENOIR_Dataset2(Dataset):
         self.nimg_name = [
             i
             for i in self.nimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
-        
+
         self.rimg_name = [
             i
             for i in self.rimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         if self.subset:
@@ -146,9 +147,12 @@ class RENOIR_Dataset2(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
-        nimg = cv2.imread(nimg_name)
+        if self.filetype=="npy":
+            nimg = np.load(nimg_name)
+        else:
+            nimg = cv2.imread(nimg_name)
+
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
