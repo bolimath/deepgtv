@@ -33,14 +33,9 @@ def main(t):
     # Generate noisy image corrupted by additive spatially correlated noise
     # with noise power spectrum PSD
     z = np.atleast_3d(y) + np.atleast_3d(noise)
-    flag=0
-    if z.min()<0:
-        print("Z MIN < 0")
-        flag=1
     noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
     np.save(noisyimagename, z)
-    if z.min()<0 and flag:
-        print("Z MIN AFTERLOAD < 0")   
+
     z = np.array(np.load(noisyimagename)) 
     # Call BM3D With the default settings.
     y_est = bm3d_rgb(z, psd)
@@ -214,7 +209,7 @@ class standardize2(object):
         if self.filetype!="npy":
             nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
         else:
-            nimg = nimg*255
+            nimg = nimg*255.0
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
@@ -309,13 +304,14 @@ def _main(imgw=324):
         nnn = s['nn'][0].split('.')[0]
         rn = s['rn'][0].split('.')[0]
         total = 0
+        if filetype=='npy':
+            if img.min()<0:
+                print("IMG MIN < 0")
+
         for i in range(T1.shape[1]):
             img = T1[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
             img = img.transpose(1, 2, 0)
-            if filetype=='npy':
-                if img.min()<0:
-                    print("IMG MIN < 0")
-                np.save('{0}\\{1}_{2}.npy'.format(noisyp, nnn,i), img )
+                        np.save('{0}\\{1}_{2}.npy'.format(noisyp, nnn,i), img )
             else:
                 plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
             total += 1
