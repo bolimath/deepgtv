@@ -33,7 +33,8 @@ def main(t):
     # Generate noisy image corrupted by additive spatially correlated noise
     # with noise power spectrum PSD
     z = np.atleast_3d(y) + np.atleast_3d(noise)
-
+    if z.min()<0:
+        print("Z MIN < 0")
     noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
     np.save(noisyimagename, z)
     z = np.array(np.load(noisyimagename)) 
