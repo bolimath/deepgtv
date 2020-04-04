@@ -305,7 +305,7 @@ def _main(imgw=324):
         rn = s['rn'][0].split('.')[0]
         total = 0
         if filetype=='npy':
-            if img.min()<0:
+            if T1.min()<0:
                 print("IMG MIN < 0")
 
         for i in range(T1.shape[1]):
