@@ -208,6 +208,8 @@ class standardize2(object):
             rimg = cv2.resize(rimg, (0, 0), fx=1, fy=1)
         if self.filetype!="npy":
             nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        else:
+            nimg = nimg*255
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
