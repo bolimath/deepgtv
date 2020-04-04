@@ -264,9 +264,9 @@ def _main(imgw=324):
         bm3d_res['psnr'].append(_psnr)
         bm3d_res['mse'].append(_mse)
     print("MEAN BM3D PSNR, MSE:", np.mean(bm3d_res['psnr']), np.mean(bm3d_res['mse']))
-
+    filetype='npy'
     dataset = RENOIR_Dataset2(img_dir='..\\gauss\\',
-                             transform = transforms.Compose([standardize2(),
+                             transform = transforms.Compose([standardize2(filetype=filetype),
                                                 ToTensor2()])
                             )
     dataloader = DataLoader(dataset, batch_size=1,
@@ -294,7 +294,10 @@ def _main(imgw=324):
         for i in range(T1.shape[1]):
             img = T1[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
             img = img.transpose(1, 2, 0)
-            plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
+            if filetype=='npy':
+                np.save('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
+            else:
+                plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
             total += 1
         for i in range(T2.shape[1]):
             img = T2[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
