@@ -152,7 +152,8 @@ class RENOIR_Dataset2(Dataset):
             nimg = np.load(nimg_name)
         else:
             nimg = cv2.imread(nimg_name)
-
+        if self.filetype=='npy':
+            print(nimg)
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
@@ -196,8 +197,7 @@ class standardize2(object):
 
     def __call__(self, sample):
         nimg, rimg, nn, rn = sample['nimg'], sample['rimg'], sample['nn'], sample['rn']
-        if self.filetype=='npy':
-            print(nimg)
+
         if self.scale:
             nimg = cv2.resize(nimg, (0, 0), fx=self.scale, fy=self.scale)
             rimg = cv2.resize(rimg, (0, 0), fx=self.scale, fy=self.scale)
