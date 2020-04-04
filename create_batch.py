@@ -101,7 +101,7 @@ class RENOIR_Dataset2(Dataset):
     Dataset loader
     """
 
-    def __init__(self, img_dir, transform=None, subset=None):
+    def __init__(self, img_dir, transform=None, subset=None, filetype="bmp"):
         """
         Args:
             img_dir (string): Path to the csv file with annotations.
