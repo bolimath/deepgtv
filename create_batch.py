@@ -33,10 +33,9 @@ def main(t):
     # with noise power spectrum PSD
     z = np.atleast_3d(y) + np.atleast_3d(noise)
 
-    z_rang = np.minimum(np.maximum(z, 0), 1)
-    noisyimagename=imagepath+ 'noisy\\' + t + '_g.bmp'
-    plt.imsave(noisyimagename, z_rang)
-    z = np.array(Image.open(noisyimagename)) / 255
+    noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
+    np.save(noisyimagename, z)
+    z = np.array(np.load(noisyimagename)) / 255
     # Call BM3D With the default settings.
     y_est = bm3d_rgb(z, psd)
 
@@ -74,7 +73,6 @@ def main(t):
     print("PSNR 2:", psnr)
     mse = ((y_est - y)**2).mean()*255
     print("MSE:", mse)
-    plt.imsave(imagepath+ 'noisy\\' + t + '_g.bmp', z_rang)
 
     # TEST CV2 PSNR
     try:
