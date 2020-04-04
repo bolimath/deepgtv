@@ -33,10 +33,14 @@ def main(t):
     # Generate noisy image corrupted by additive spatially correlated noise
     # with noise power spectrum PSD
     z = np.atleast_3d(y) + np.atleast_3d(noise)
+    flag=0
     if z.min()<0:
         print("Z MIN < 0")
+        flag=1
     noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
     np.save(noisyimagename, z)
+    if z.min()<0 and flag:
+        print("Z MIN AFTERLOAD < 0")   
     z = np.array(np.load(noisyimagename)) 
     # Call BM3D With the default settings.
     y_est = bm3d_rgb(z, psd)
