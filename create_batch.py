@@ -276,7 +276,7 @@ def _main(imgw=324):
         bm3d_res['mse'].append(_mse)
     print("MEAN BM3D PSNR, MSE:", np.mean(bm3d_res['psnr']), np.mean(bm3d_res['mse']))
     filetype='npy'
-    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\', filetype=filetype
+    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\', filetype=filetype,
                              transform = transforms.Compose([standardize2(filetype=filetype),
                                                 ToTensor2()])
                             )
