@@ -232,6 +232,7 @@ class RENOIR_Dataset(Dataset):
             if nimg.min()<0:
                 print(nimg.min(), "MIN <0 ")
         else:
+            print('cv2read')
             nimg = cv2.imread(nimg_name)
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
