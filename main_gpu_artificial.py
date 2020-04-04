@@ -766,6 +766,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
         losshist.append(running_loss / ld)
 
         if ((epoch + 1) % 2 == 0) or (epoch + 1) == total_epoch:
+            print(inputs[0].min(), inputs[0].max(), labels[0].min(), labels[0].max())
             histW = gtv(inputs[:1, :, :, :], debug=1)
             print("\tCNNF stats: ", gtv.cnnf.layer1[0].weight.grad.mean())
             print("\tCNNU stats: ", gtv.u.mean().data)
