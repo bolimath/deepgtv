@@ -280,6 +280,7 @@ def _main(imgw=324):
                             )
     dataloader = DataLoader(dataset, batch_size=1,
                             shuffle=True, num_workers=1)
+    print(dataset.nimg_name)
     # rm -r gauss_batch
     # mkdir gauss_batch
     # mkdir gauss_batch/noisy
@@ -292,6 +293,7 @@ def _main(imgw=324):
     os.makedirs(noisyp)
     os.makedirs(refp)
     stride=18
+    
     for i_batch, s in enumerate(dataloader):
         print(i_batch, s['nimg'].size(),
               s['rimg'].size(), len(s['nimg']), s['nn'], s['rn'])
