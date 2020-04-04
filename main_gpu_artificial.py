@@ -229,6 +229,7 @@ class RENOIR_Dataset(Dataset):
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
         if self.filetype=="npy":
             nimg = np.load(nimg_name)
+            print(nimg.min(), nimg.max())
         else:
             nimg = cv2.imread(nimg_name)
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
