@@ -35,7 +35,7 @@ def main(t):
 
     noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
     np.save(noisyimagename, z)
-    z = np.array(np.load(noisyimagename)) / 255
+    z = np.array(np.load(noisyimagename)) 
     # Call BM3D With the default settings.
     y_est = bm3d_rgb(z, psd)
 
@@ -252,7 +252,7 @@ def _main(imgw=324):
         inputs = data['nimg'].float().type(dtype).squeeze(0)
         img = inputs.cpu().detach().numpy().astype(np.uint8)
         img = img.transpose(1, 2, 0)
-        plt.imsave('{0}{1}_g.bmp'.format(noisyp, testset[i]), img )
+        #plt.imsave('{0}{1}_g.bmp'.format(noisyp, testset[i]), img )
         inputs = data['rimg'].float().type(dtype).squeeze(0)
         img = inputs.cpu().detach().numpy().astype(np.uint8)
         img = img.transpose(1, 2, 0)
