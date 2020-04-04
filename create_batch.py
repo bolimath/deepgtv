@@ -307,7 +307,7 @@ def _main(imgw=324):
 
 
         for i in range(T1.shape[1]):
-            img = T1[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
+            img = T1[:, i, :, :].cpu().detach().numpy()
             img = img.transpose(1, 2, 0)
             if filetype=='npy':
                 np.save('{0}\\{1}_{2}.npy'.format(noisyp, nnn,i), img )
