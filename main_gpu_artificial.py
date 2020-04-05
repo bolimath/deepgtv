@@ -180,12 +180,13 @@ class RENOIR_Dataset(Dataset):
     Dataset loader
     """
 
-    def __init__(self, img_dir, transform=None, subset=None):
+    def __init__(self, img_dir, transform=None, subset=None, filetype='bmp'):
         """
         Args:
             img_dir (string): Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.filetype=filetype
         self.img_dir = img_dir
         self.npath = os.path.join(img_dir, "noisy")
         self.rpath = os.path.join(img_dir, "ref")
@@ -195,13 +196,13 @@ class RENOIR_Dataset(Dataset):
         self.nimg_name = [
             i
             for i in self.nimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         self.rimg_name = [
             i
             for i in self.rimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         if self.subset:
@@ -226,7 +227,11 @@ class RENOIR_Dataset(Dataset):
             idx = idx.tolist()
 
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
-        nimg = cv2.imread(nimg_name)
+        if self.filetype=="npy":
+            nimg = np.load(nimg_name)
+        else:
+            print('cv2read')
+            nimg = cv2.imread(nimg_name)
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
@@ -241,7 +246,7 @@ class RENOIR_Dataset(Dataset):
 class standardize(object):
     """Convert opencv BGR to RGB order. Scale the image with a ratio"""
 
-    def __init__(self, scale=None, w=None, normalize=None):
+    def __init__(self, scale=None, w=None, normalize=None, filetype="bmp"):
         """
         Args:
         scale (float): resize height and width of samples to scale*width and scale*height
@@ -250,6 +255,7 @@ class standardize(object):
         self.scale = scale
         self.w = w
         self.normalize = normalize
+        self.filetype=filetype
 
     def __call__(self, sample):
         nimg, rimg = sample["nimg"], sample["rimg"]
@@ -263,26 +269,13 @@ class standardize(object):
         if self.normalize:
             nimg = cv2.resize(nimg, (0, 0), fx=1, fy=1)
             rimg = cv2.resize(rimg, (0, 0), fx=1, fy=1)
-        nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        if self.filetype!="npy":
+            nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
             rimg = rimg / 255
         return {"nimg": nimg, "rimg": rimg}
-
-
-class gaussian_noise_(object):
-    def __init__(self, stddev, mean):
-        self.stddev = stddev
-        self.mean = mean
-
-    def __call__(self, sample):
-        nimg, rimg = sample["rimg"], sample["rimg"]
-        noise = Variable(nimg.data.new(nimg.size()).normal_(self.mean, self.stddev))
-        nimg = nimg + noise
-        nimg = _norm(nimg, 0, 255)
-        return {"nimg": nimg, "rimg": rimg}
-
 
 class ToTensor(object):
     """Convert ndarrays in sample to Tensors."""
@@ -372,6 +365,7 @@ def weights_init_normal(m):
 class OPT:
     def __init__(
         self,
+        filetype='bmp',
         batch_size=100,
         width=36,
         connectivity="8",
@@ -386,6 +380,7 @@ class OPT:
         lr=1e-4,
         momentum=0.99,
     ):
+        self.filetype=filetype
         self.batch_size = batch_size
         self.width = width
         self.edges = 0
@@ -407,6 +402,7 @@ class OPT:
 
     def _print(self):
         print(
+            "filetype =", self.filetype,
             "batch_size =",
             self.batch_size,
             ", width =",
@@ -453,7 +449,7 @@ class GTV(nn.Module):
         self.wt = width
         self.width = width
         self.cnnu = cnnu(u_min=u_min)
-
+        self.admm_iter = opt.admm_iter
         self.cnny = cnny()
 
         if cuda:
@@ -468,6 +464,7 @@ class GTV(nn.Module):
 
     def forward(self, xf, debug=False, Tmod=False):  # gtvforward
         #u = opt.u
+        ## LEARN u
         u = self.cnnu.forward(xf)
         u_max = opt.u_max
         u_min = opt.u_min
@@ -475,12 +472,7 @@ class GTV(nn.Module):
         u = u.unsqueeze(1).unsqueeze(1)
         if debug:
             self.u=u.clone()
-        # masks = (self.u > u_max).type(dtype)
-        # self.u = self.u - (self.u - u_max)*masks
-        # masks = (self.u > self.u_min).type(dtype)
-        # self.u = self.u - (self.u - self.u_min)*masks
 
-        # x = torch.zeros(xf.shape[0], xf.shape[1], opt.width**2, 1).type(dtype).requires_grad_(True)
         x = xf.view(xf.shape[0], xf.shape[1], opt.width ** 2, 1).requires_grad_(True)
         z = opt.H.matmul(x).requires_grad_(True)
 
@@ -541,9 +533,6 @@ class GTV(nn.Module):
                     x=z, grad=grad, w=w, u=u, eta=eta, debug=debug
                 ).requires_grad_(True)
                 if debug:
-                    # l = ((y-xhat).permute(0, 1, 3, 2).matmul(y-xhat) + (u * w * z.abs()).sum(axis=[1, 2, 3]))
-
-                    # hist.append(l[0, 0, :, :])
                     if debug > 1:
                         print(
                             "Left: ",
@@ -568,16 +557,14 @@ class GTV(nn.Module):
                 )
                 hist.append(l[:, 0, :, :])
 
-        # xhat = D.matmul(2*y - H.T.matmul(lagrange) + delta*H.T.matmul(z)).requires_grad_(True)
         if debug:
-            print("min - max xhat: ", xhat.min(), xhat.max())
+            print("min - max xhat: ", xhat.min().data, xhat.max().data)
             hist = [h.flatten() for h in hist]
             return hist
-        #xhat = _norm(xhat, 0, 255)
         return xhat.view(xhat.shape[0], opt.channels, opt.width, opt.width)
 
     def predict(self, xf):
-        pass
+        xhat = self.forward(xf, Tmod=self.admm_iter+4) 
 
 
 def supporting_matrix(opt):
@@ -688,7 +675,6 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     # _subset = ['10', '1', '3', '5', '9']
     if not subset:
         _subset = ["10", "1", "7", "8", "9"]
-        #_subset = ["1", "3", "5", "7", "9"]
         print('Train: ', _subset)
         subset = [i + "_" for i in _subset]
     else:
@@ -696,8 +682,8 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     dataset = RENOIR_Dataset(
         img_dir=os.path.join(
             "C:\\Users\\HUYVU\\AppData\\Local\\Packages\\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\\LocalState\\rootfs\\home\\huyvu\\gauss_batch"
-        ),
-        transform=transforms.Compose([standardize(normalize=False), ToTensor()]),
+        ), filetype=opt.filetype,
+        transform=transforms.Compose([standardize(normalize=False, filetype=opt.filetype), ToTensor()]),
         subset=subset,
     )
     dataloader = DataLoader(
@@ -753,9 +739,6 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
             # forward + backward + optimize
             outputs = gtv(inputs, debug=0)
             loss = criterion(outputs, labels)
-            #loss = ((labels-inputs)**2).mean()
-            #out = loss(x, t).sum() / batch_size
-            #print(loss, ((labels - outputs)**2).mean(axis=0).mean())
             loss.backward()
             torch.nn.utils.clip_grad_norm_(gtv.parameters(), 1e5)
 
@@ -771,7 +754,9 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
         losshist.append(running_loss / ld)
 
         if ((epoch + 1) % 2 == 0) or (epoch + 1) == total_epoch:
-            histW = gtv(inputs[:1, :, :, :], debug=1)
+            #print(inputs[0].min(), inputs[0].max(), labels[0].min(), labels[0].max())
+            with torch.no_grad():
+                histW = gtv(inputs[:1, :, :, :], debug=1, Tmod=opt.admm_iter+4)
             print("\tCNNF stats: ", gtv.cnnf.layer1[0].weight.grad.mean())
             print("\tCNNU stats: ", gtv.u.mean().data)
             pmax = list()
@@ -786,7 +771,8 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
             print("\t", np.argmin(histW), min(histW), histW)
 
         #scheduler.step() 
-        if (epoch+1) in [100, 400, 600, 800]:
+        #if (epoch+1) in [100, 400, 600, 800]:
+        if (epoch+1) in [10, 40, 70]:
             print("CHANGE LR")
             optimizer = optim.SGD(gtv.parameters(), lr=opt.lr/10, momentum=opt.momentum)
     torch.save(gtv.state_dict(), SAVEPATH)
@@ -800,7 +786,8 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     ax.plot(ma_vec)
     fig.savefig("loss.png")
 
-opt = OPT(batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=25, lr=1e-5, momentum=0.9, u_max=65, u_min=50)
+opt = OPT(filetype='npy', 
+        batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=50, lr=8e-6, momentum=0.9, u_max=65, u_min=50)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
@@ -815,4 +802,4 @@ if __name__=="__main__":
     else:
         cont = None
 
-    main(seed=1, model_name='GTV.pkl', cont=cont, epoch=1000, subset=['1', '3', '5', '7', '9'])
+    main(seed=1, model_name='GTV.pkl', cont=cont, epoch=100, subset=['1', '3', '5', '7', '9'])

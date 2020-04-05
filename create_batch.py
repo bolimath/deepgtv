@@ -1,4 +1,5 @@
-from proxgtv.proxgtv import *
+#from proxgtv.proxgtv import *
+from main_gpu_artificial import *
 import os
 import argparse
 import numpy as np
@@ -32,11 +33,10 @@ def main(t):
     # Generate noisy image corrupted by additive spatially correlated noise
     # with noise power spectrum PSD
     z = np.atleast_3d(y) + np.atleast_3d(noise)
+    noisyimagename=imagepath+ 'noisy\\' + t + '_g.npy'
+    np.save(noisyimagename, z)
 
-    z_rang = np.minimum(np.maximum(z, 0), 1)
-    noisyimagename=imagepath+ 'noisy\\' + t + '_g.bmp'
-    plt.imsave(noisyimagename, z_rang)
-    z = np.array(Image.open(noisyimagename)) / 255
+    z = np.array(np.load(noisyimagename)) 
     # Call BM3D With the default settings.
     y_est = bm3d_rgb(z, psd)
 
@@ -56,7 +56,7 @@ def main(t):
     # y_est = bm3d_rgb(z, np.concatenate((psd1, psd2, psd3), 2))
     # y_est = bm3d_rgb(z, [sigma1, sigma2, sigma3])
 
-    psnr = get_psnr(y, y_est)
+    psnr = get_psnr(y, np.minimum(np.maximum(y_est, 0), 1))
     print("PSNR:", psnr)
 
     # PSNR ignoring 16-pixel wide borders (as used in the paper), due to refiltering potentially leaving artifacts
@@ -74,7 +74,6 @@ def main(t):
     print("PSNR 2:", psnr)
     mse = ((y_est - y)**2).mean()*255
     print("MSE:", mse)
-    plt.imsave(imagepath+ 'noisy\\' + t + '_g.bmp', z_rang)
 
     # TEST CV2 PSNR
     try:
@@ -88,7 +87,6 @@ def main(t):
     tref = cv2.imread(argref)
     (score, diff) = compare_ssim(tref, d, full=True, multichannel=True)
     psnr2 = cv2.PSNR(tref, d)
-    print('#######################') 
     print('CV2 PSNR, SSIM: {:.2f}, {:.2f}'.format( psnr2, score))
     print('#######################') 
     print('')
@@ -102,12 +100,13 @@ class RENOIR_Dataset2(Dataset):
     Dataset loader
     """
 
-    def __init__(self, img_dir, transform=None, subset=None):
+    def __init__(self, img_dir, transform=None, subset=None, filetype="bmp"):
         """
         Args:
             img_dir (string): Path to the csv file with annotations.
             transform (callable, optional): Optional transform to be applied on a sample.
         """
+        self.filetype=filetype
         self.img_dir = img_dir
         self.npath = os.path.join(img_dir, "noisy")
         self.rpath = os.path.join(img_dir, "ref")
@@ -117,13 +116,13 @@ class RENOIR_Dataset2(Dataset):
         self.nimg_name = [
             i
             for i in self.nimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
-        
+
         self.rimg_name = [
             i
             for i in self.rimg_name
-            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
         ]
 
         if self.subset:
@@ -147,9 +146,12 @@ class RENOIR_Dataset2(Dataset):
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-
         nimg_name = os.path.join(self.npath, self.nimg_name[idx])
-        nimg = cv2.imread(nimg_name)
+        if self.filetype=="npy":
+            nimg = np.load(nimg_name)
+        else:
+            nimg = cv2.imread(nimg_name)
+
         rimg_name = os.path.join(self.rpath, self.rimg_name[idx])
         rimg = cv2.imread(rimg_name)
 
@@ -178,7 +180,8 @@ class ToTensor2(object):
 class standardize2(object):
     """Convert opencv BGR to RGB order. Scale the image with a ratio"""
 
-    def __init__(self, scale=None, w=None, normalize=None):
+    
+    def __init__(self, scale=None, w=None, normalize=None, filetype="bmp"):
         """
         Args:
         scale (float): resize height and width of samples to scale*width and scale*height
@@ -187,9 +190,12 @@ class standardize2(object):
         self.scale = scale
         self.w = w
         self.normalize = normalize
+        self.filetype=filetype
+
 
     def __call__(self, sample):
         nimg, rimg, nn, rn = sample['nimg'], sample['rimg'], sample['nn'], sample['rn']
+
         if self.scale:
             nimg = cv2.resize(nimg, (0, 0), fx=self.scale, fy=self.scale)
             rimg = cv2.resize(rimg, (0, 0), fx=self.scale, fy=self.scale)
@@ -200,7 +206,10 @@ class standardize2(object):
         if self.normalize:
             nimg = cv2.resize(nimg, (0, 0), fx=1, fy=1)
             rimg = cv2.resize(rimg, (0, 0), fx=1, fy=1)
-        nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        if self.filetype!="npy":
+            nimg = cv2.cvtColor(nimg, cv2.COLOR_BGR2RGB)
+        else:
+            nimg = nimg*255.0
         rimg = cv2.cvtColor(rimg, cv2.COLOR_BGR2RGB)
         if self.normalize:
             nimg = nimg / 255
@@ -254,7 +263,7 @@ def _main(imgw=324):
         inputs = data['nimg'].float().type(dtype).squeeze(0)
         img = inputs.cpu().detach().numpy().astype(np.uint8)
         img = img.transpose(1, 2, 0)
-        plt.imsave('{0}{1}_g.bmp'.format(noisyp, testset[i]), img )
+        #plt.imsave('{0}{1}_g.bmp'.format(noisyp, testset[i]), img )
         inputs = data['rimg'].float().type(dtype).squeeze(0)
         img = inputs.cpu().detach().numpy().astype(np.uint8)
         img = img.transpose(1, 2, 0)
@@ -266,13 +275,14 @@ def _main(imgw=324):
         bm3d_res['psnr'].append(_psnr)
         bm3d_res['mse'].append(_mse)
     print("MEAN BM3D PSNR, MSE:", np.mean(bm3d_res['psnr']), np.mean(bm3d_res['mse']))
-
-    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\',
-                             transform = transforms.Compose([standardize2(),
+    filetype='npy'
+    dataset = RENOIR_Dataset2(img_dir='..\\gauss\\', filetype=filetype,
+                             transform = transforms.Compose([standardize2(filetype=filetype),
                                                 ToTensor2()])
                             )
     dataloader = DataLoader(dataset, batch_size=1,
-                            shuffle=True, num_workers=1)
+                            shuffle=False, num_workers=1)
+    print(dataset.nimg_name)
     # rm -r gauss_batch
     # mkdir gauss_batch
     # mkdir gauss_batch/noisy
@@ -285,6 +295,7 @@ def _main(imgw=324):
     os.makedirs(noisyp)
     os.makedirs(refp)
     stride=18
+    
     for i_batch, s in enumerate(dataloader):
         print(i_batch, s['nimg'].size(),
               s['rimg'].size(), len(s['nimg']), s['nn'], s['rn'])
@@ -293,10 +304,15 @@ def _main(imgw=324):
         nnn = s['nn'][0].split('.')[0]
         rn = s['rn'][0].split('.')[0]
         total = 0
+
+
         for i in range(T1.shape[1]):
-            img = T1[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
+            img = T1[:, i, :, :].cpu().detach().numpy()
             img = img.transpose(1, 2, 0)
-            plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
+            if filetype=='npy':
+                np.save('{0}\\{1}_{2}.npy'.format(noisyp, nnn,i), img )
+            else:
+                plt.imsave('{0}\\{1}_{2}.png'.format(noisyp, nnn,i), img )
             total += 1
         for i in range(T2.shape[1]):
             img = T2[:, i, :, :].cpu().detach().numpy().astype(np.uint8)
