@@ -463,20 +463,16 @@ class GTV(nn.Module):
         self.cnnu.apply(weights_init_normal)
 
     def forward(self, xf, debug=False, Tmod=False):  # gtvforward
-        #u = opt.u
-        u = self.cnnu.forward(xf)
-        u_max = opt.u_max
-        u_min = opt.u_min
-        u = torch.clamp(u, u_min, u_max)
-        u = u.unsqueeze(1).unsqueeze(1)
-        if debug:
-            self.u=u.clone()
-        # masks = (self.u > u_max).type(dtype)
-        # self.u = self.u - (self.u - u_max)*masks
-        # masks = (self.u > self.u_min).type(dtype)
-        # self.u = self.u - (self.u - self.u_min)*masks
+        u = opt.u
+        ## LEARN u
+        #u = self.cnnu.forward(xf)
+        #u_max = opt.u_max
+        #u_min = opt.u_min
+        #u = torch.clamp(u, u_min, u_max)
+        #u = u.unsqueeze(1).unsqueeze(1)
+        #if debug:
+        #    self.u=u.clone()
 
-        # x = torch.zeros(xf.shape[0], xf.shape[1], opt.width**2, 1).type(dtype).requires_grad_(True)
         x = xf.view(xf.shape[0], xf.shape[1], opt.width ** 2, 1).requires_grad_(True)
         z = opt.H.matmul(x).requires_grad_(True)
 
@@ -783,7 +779,8 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
             print("\t", np.argmin(histW), min(histW), histW)
 
         #scheduler.step() 
-        if (epoch+1) in [100, 400, 600, 800]:
+        #if (epoch+1) in [100, 400, 600, 800]:
+        if (epoch+1) in [20, 40, 70]:
             print("CHANGE LR")
             optimizer = optim.SGD(gtv.parameters(), lr=opt.lr/10, momentum=opt.momentum)
     torch.save(gtv.state_dict(), SAVEPATH)
@@ -798,7 +795,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     fig.savefig("loss.png")
 
 opt = OPT(filetype='npy', 
-        batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=25, lr=1e-5, momentum=0.9, u_max=65, u_min=50)
+        batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=50, lr=2e-5, momentum=0.9, u_max=65, u_min=50)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
