@@ -142,7 +142,7 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
         mse = ((d-(tref/255.0))**2).mean()*255
         print("MSE: {:.5f}".format(mse))
         print(tref.min(), tref.max())
-        tref = tref.astype(d.dtype)
+        tref = tref.astype((d*255).dtype)
         print(tref.min(), tref.max())
         psnr2 = cv2.PSNR(tref,d*255)
         print("PSNR: {:.5f}".format(psnr2))
