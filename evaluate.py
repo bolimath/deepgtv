@@ -141,6 +141,7 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
     if argref:
         mse = ((d-(tref/255.0))**2).mean()*255
         print("MSE: {:.5f}".format(mse))
+        print(tref.dtype)
         psnr2 = cv2.PSNR(tref,d*255)
         print("PSNR: {:.5f}".format(psnr2))
     d = np.minimum(np.maximum(d, 0), 1)
