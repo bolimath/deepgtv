@@ -128,6 +128,7 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
     new_d = list()
     for d in ds:
         #_d = (d - d.min()) * (1 / (d.max() - d.min()))
+        print(d.min(), d.max())
         _d = d/255
         new_d.append(_d)
     d = np.array(new_d).transpose(1, 2, 0)
