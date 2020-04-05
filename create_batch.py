@@ -56,7 +56,7 @@ def main(t):
     # y_est = bm3d_rgb(z, np.concatenate((psd1, psd2, psd3), 2))
     # y_est = bm3d_rgb(z, [sigma1, sigma2, sigma3])
 
-    psnr = get_psnr(y, y_est)
+    psnr = get_psnr(y, np.minimum(np.maximum(y_est, 0), 1))
     print("PSNR:", psnr)
 
     # PSNR ignoring 16-pixel wide borders (as used in the paper), due to refiltering potentially leaving artifacts
