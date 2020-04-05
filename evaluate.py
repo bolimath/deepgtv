@@ -130,8 +130,8 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
         #_d = (d - d.min()) * (1 / (d.max() - d.min()))
         _d = d/255
         new_d.append(_d)
-    print("RANGE: ", d.min(), d.max(), d.shape)
     d = np.array(new_d).transpose(1, 2, 0)
+    print("RANGE: ", d.min(), d.max(), d.shape)
     if 0:
         opath = args.output
     else:
