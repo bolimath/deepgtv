@@ -27,7 +27,7 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
     except Exception:
         from skimage.measure import compare_ssim
     if filetype=='npy':
-        sample = np.load(inp)*255
+        sample = np.load(inp)*255.0
     else:
         sample = cv2.imread(inp)
     if width==None:
@@ -140,14 +140,15 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
         opath = opath[:-3] + "png"
     if argref:
         mse = ((d-(tref/255.0))**2).mean()*255
-        print("MSE: {:.6f}".format(mse))
+        print("MSE: {:.5f}".format(mse))
+        psnr2 = cv2.PSNR(tref,d*255)
+        print("PSNR: {:.5f}".format(psnr2))
     d = np.minimum(np.maximum(d, 0), 1)
     plt.imsave(opath, d)
     if argref:
         d = cv2.imread(opath)
         d = cv2.cvtColor(d, cv2.COLOR_BGR2RGB)
         psnr2 = cv2.PSNR(tref,d)
-        print("PSNR: {:.5f}".format(psnr2))
         (score, diff) = compare_ssim(tref, d, full=True, multichannel=True)
         print("SSIM: {:.5f}".format(score))
     print("Saved ", opath)
