@@ -21,18 +21,21 @@ else:
     dtype = torch.FloatTensor
 
 
-def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_', verbose=0):
+def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_', verbose=0, filetype='bmp'):
     try:
         from skimage.metrics import structural_similarity as compare_ssim
     except Exception:
         from skimage.measure import compare_ssim
-
-    sample = cv2.imread(inp)
+    if filetype=='npy':
+        sample = np.load(inp)
+    else:
+        sample = cv2.imread(inp)
     if width==None:
         width = sample.shape[0]
     else:
         sample = cv2.resize(sample, (width, width))
-    sample = cv2.cvtColor(sample, cv2.COLOR_BGR2RGB)
+    if filetype!='npy':
+        sample = cv2.cvtColor(sample, cv2.COLOR_BGR2RGB)
     sample = sample.transpose((2, 0, 1))
     shape = sample.shape
 
@@ -207,11 +210,12 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
     #trainset = ["10", "1", "7", "8", "9"]
     traineva = {'psnr':list(), 'ssim':list(), 'ssim2':list(), 'psnr2':list(), 'mse':list()}
     stride=9
+    filetype= 'npy'
     for t in trainset:
         print("image #", t)
-        inp = "{0}/noisy/{1}{2}.bmp".format(image_path, t, npref)
+        inp = "{0}/noisy/{1}{2}.{3}".format(image_path, t, npref, filetype)
         argref = "{0}/ref/{1}_r.bmp".format(image_path, t)
-        _psnr, _ssim, _ssim2, _psnr2, _mse, _ = denoise(inp, gtv, argref, stride=stride, width=imgw, prefix=seed)
+        _psnr, _ssim, _ssim2, _psnr2, _mse, _ = denoise(inp, gtv, argref, stride=stride, width=imgw, prefix=seed, filetype=filetype)
         traineva["psnr"].append(_psnr)
         traineva["ssim"].append(_ssim)
         traineva["ssim2"].append(_ssim2)
