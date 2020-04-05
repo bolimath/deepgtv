@@ -810,4 +810,4 @@ if __name__=="__main__":
     else:
         cont = None
 
-    main(seed=1, model_name='GTV.pkl', cont=cont, epoch=1000, subset=['1', '3', '5', '7', '9'])
+    main(seed=1, model_name='GTV.pkl', cont=cont, epoch=100, subset=['1', '3', '5', '7', '9'])
