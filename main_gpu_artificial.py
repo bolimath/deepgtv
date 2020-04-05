@@ -448,30 +448,30 @@ class GTV(nn.Module):
         self.opt = opt
         self.wt = width
         self.width = width
-        #self.cnnu = cnnu(u_min=u_min)
-
+        self.cnnu = cnnu(u_min=u_min)
+        self.admm_iter = opt.admm_iter
         self.cnny = cnny()
 
         if cuda:
             self.cnnf.cuda()
-            #self.cnnu.cuda()
+            self.cnnu.cuda()
             self.cnny.cuda()
 
         self.dtype = torch.cuda.FloatTensor if cuda else torch.FloatTensor
         self.cnnf.apply(weights_init_normal)
         self.cnny.apply(weights_init_normal)
-        #self.cnnu.apply(weights_init_normal)
+        self.cnnu.apply(weights_init_normal)
 
     def forward(self, xf, debug=False, Tmod=False):  # gtvforward
-        u = opt.u
+        #u = opt.u
         ## LEARN u
-        #u = self.cnnu.forward(xf)
-        #u_max = opt.u_max
-        #u_min = opt.u_min
-        #u = torch.clamp(u, u_min, u_max)
-        #u = u.unsqueeze(1).unsqueeze(1)
-        #if debug:
-        #    self.u=u.clone()
+        u = self.cnnu.forward(xf)
+        u_max = opt.u_max
+        u_min = opt.u_min
+        u = torch.clamp(u, u_min, u_max)
+        u = u.unsqueeze(1).unsqueeze(1)
+        if debug:
+            self.u=u.clone()
 
         x = xf.view(xf.shape[0], xf.shape[1], opt.width ** 2, 1).requires_grad_(True)
         z = opt.H.matmul(x).requires_grad_(True)
@@ -533,9 +533,6 @@ class GTV(nn.Module):
                     x=z, grad=grad, w=w, u=u, eta=eta, debug=debug
                 ).requires_grad_(True)
                 if debug:
-                    # l = ((y-xhat).permute(0, 1, 3, 2).matmul(y-xhat) + (u * w * z.abs()).sum(axis=[1, 2, 3]))
-
-                    # hist.append(l[0, 0, :, :])
                     if debug > 1:
                         print(
                             "Left: ",
@@ -560,16 +557,14 @@ class GTV(nn.Module):
                 )
                 hist.append(l[:, 0, :, :])
 
-        # xhat = D.matmul(2*y - H.T.matmul(lagrange) + delta*H.T.matmul(z)).requires_grad_(True)
         if debug:
-            print("min - max xhat: ", xhat.min(), xhat.max())
+            print("min - max xhat: ", xhat.min().data, xhat.max().data)
             hist = [h.flatten() for h in hist]
             return hist
-        #xhat = _norm(xhat, 0, 255)
         return xhat.view(xhat.shape[0], opt.channels, opt.width, opt.width)
 
     def predict(self, xf):
-        pass
+        xhat = self.forward(xf, Tmod=self.admm_iter+4) 
 
 
 def supporting_matrix(opt):
@@ -680,7 +675,6 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     # _subset = ['10', '1', '3', '5', '9']
     if not subset:
         _subset = ["10", "1", "7", "8", "9"]
-        #_subset = ["1", "3", "5", "7", "9"]
         print('Train: ', _subset)
         subset = [i + "_" for i in _subset]
     else:
@@ -745,9 +739,6 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
             # forward + backward + optimize
             outputs = gtv(inputs, debug=0)
             loss = criterion(outputs, labels)
-            #loss = ((labels-inputs)**2).mean()
-            #out = loss(x, t).sum() / batch_size
-            #print(loss, ((labels - outputs)**2).mean(axis=0).mean())
             loss.backward()
             torch.nn.utils.clip_grad_norm_(gtv.parameters(), 1e5)
 
@@ -764,9 +755,9 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
 
         if ((epoch + 1) % 2 == 0) or (epoch + 1) == total_epoch:
             #print(inputs[0].min(), inputs[0].max(), labels[0].min(), labels[0].max())
-            histW = gtv(inputs[:1, :, :, :], debug=1)
+            histW = gtv(inputs[:1, :, :, :], debug=1, Tmod=opt.admm_iter+4)
             print("\tCNNF stats: ", gtv.cnnf.layer1[0].weight.grad.mean())
-            #print("\tCNNU stats: ", gtv.u.mean().data)
+            print("\tCNNU stats: ", gtv.u.mean().data)
             pmax = list()
             for p in gtv.parameters():
                 pmax.append(p.grad.max())
