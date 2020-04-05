@@ -139,17 +139,17 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
         opath = "./{0}_{1}".format(prefix, filename)
         opath = opath[:-3] + "png"
     if argref:
+        psnr2 = cv2.PSNR(tref/255.0, d)
         mse = ((d-(tref/255.0))**2).mean()*255
         print("MSE: {:.6f}".format(mse))
+        print("PSNR: {:.5f}".format(psnr2))
     d = np.minimum(np.maximum(d, 0), 1)
     plt.imsave(opath, d)
     if argref:
         d = cv2.imread(opath)
         d = cv2.cvtColor(d, cv2.COLOR_BGR2RGB)
         (score, diff) = compare_ssim(tref, d, full=True, multichannel=True)
-        psnr2 = cv2.PSNR(tref, d)
         print("SSIM: {:.5f}".format(score))
-        print("PSNR: {:.5f}".format(psnr2))
     print("Saved ", opath)
     if argref:
         return (
