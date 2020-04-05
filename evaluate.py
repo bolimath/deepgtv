@@ -246,6 +246,7 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
     for t in testset:
         print("image #", t)
         inp = "{0}/noisy/{1}{2}.{3}".format(image_path, t, npref, filetype)
+        print(inp)
         argref = "{0}/ref/{1}_r.bmp".format(image_path, t)
         _psnr, _ssim, _ssim2, _psnr2, _mse, _ = denoise(inp, gtv, argref, stride=stride, width=imgw, prefix=seed)
         testeva["psnr"].append(_psnr)
