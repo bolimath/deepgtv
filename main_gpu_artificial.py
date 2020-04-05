@@ -780,7 +780,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
 
         #scheduler.step() 
         #if (epoch+1) in [100, 400, 600, 800]:
-        if (epoch+1) in [20, 40, 70]:
+        if (epoch+1) in [10, 40, 70]:
             print("CHANGE LR")
             optimizer = optim.SGD(gtv.parameters(), lr=opt.lr/10, momentum=opt.momentum)
     torch.save(gtv.state_dict(), SAVEPATH)
