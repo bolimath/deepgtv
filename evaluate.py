@@ -139,6 +139,7 @@ def denoise(inp, gtv, argref, normalize=False, stride=36, width=324, prefix='_',
         opath = "./{0}_{1}".format(prefix, filename)
         opath = opath[:-3] + "png"
     if argref:
+        print((tref/255.0).dtype, d.dtype)
         psnr2 = cv2.PSNR(tref/255.0, d)
         mse = ((d-(tref/255.0))**2).mean()*255
         print("MSE: {:.6f}".format(mse))
