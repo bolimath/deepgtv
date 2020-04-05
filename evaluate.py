@@ -230,7 +230,7 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
             img1 = np.load(inp)*255
         else:
             img1 = cv2.imread(inp)[:, :, : opt.channels]
-        img2 = cv2.imread(argref)[:, :, : opt.channels]
+        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
     print("========================")
@@ -263,7 +263,7 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
             img1 = np.load(inp)*255
         else:
             img1 = cv2.imread(inp)[:, :, : opt.channels]
-        img2 = cv2.imread(argref)[:, :, : opt.channels]
+        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
     print("========================")
