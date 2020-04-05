@@ -766,7 +766,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
             print(inputs[0].min(), inputs[0].max(), labels[0].min(), labels[0].max())
             histW = gtv(inputs[:1, :, :, :], debug=1)
             print("\tCNNF stats: ", gtv.cnnf.layer1[0].weight.grad.mean())
-            print("\tCNNU stats: ", gtv.u.mean().data)
+            #print("\tCNNU stats: ", gtv.u.mean().data)
             pmax = list()
             for p in gtv.parameters():
                 pmax.append(p.grad.max())
