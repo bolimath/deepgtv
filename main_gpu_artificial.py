@@ -448,19 +448,19 @@ class GTV(nn.Module):
         self.opt = opt
         self.wt = width
         self.width = width
-        self.cnnu = cnnu(u_min=u_min)
+        #self.cnnu = cnnu(u_min=u_min)
 
         self.cnny = cnny()
 
         if cuda:
             self.cnnf.cuda()
-            self.cnnu.cuda()
+            #self.cnnu.cuda()
             self.cnny.cuda()
 
         self.dtype = torch.cuda.FloatTensor if cuda else torch.FloatTensor
         self.cnnf.apply(weights_init_normal)
         self.cnny.apply(weights_init_normal)
-        self.cnnu.apply(weights_init_normal)
+        #self.cnnu.apply(weights_init_normal)
 
     def forward(self, xf, debug=False, Tmod=False):  # gtvforward
         u = opt.u
@@ -795,7 +795,7 @@ def main(seed, model_name, cont=None, optim_name=None, subset=None, epoch=100):
     fig.savefig("loss.png")
 
 opt = OPT(filetype='npy', 
-        batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=50, lr=2e-5, momentum=0.9, u_max=65, u_min=50)
+        batch_size = 50, admm_iter=4, prox_iter=3, delta=.1, channels=3, eta=.3, u=50, lr=1e-5, momentum=0.9, u_max=65, u_min=50)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
