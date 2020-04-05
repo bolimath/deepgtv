@@ -1,3 +1,4 @@
+# NPY version (negative input and > 255 input, which is not realistic). 
 import scipy.sparse as ss
 import torch
 import numpy as np
@@ -282,6 +283,7 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
     return traineva, testeva
 if __name__=="__main__":
     global opt
+    
     parser = argparse.ArgumentParser()
     
     parser.add_argument(
