@@ -196,7 +196,11 @@ class RENOIR_Dataset(Dataset):
         self.nimg_name = [
             i
             for i in self.nimg_name
+<<<<<<< HEAD
             if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp", "tif", "npy"]
+=======
+            if i.split(".")[-1].lower() in ["jpeg", "jpg", "png", "bmp"]
+>>>>>>> parent of d66ce36... PSNR 29, MSE 0.35
         ]
 
         self.rimg_name = [
