@@ -232,10 +232,10 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
         except Exception:
             from skimage.measure import compare_ssim
         if filetype=='npy':
-            img1 = np.load(inp)*255
+            img1 = np.load(inp)*255.0
         else:
             img1 = cv2.imread(inp)[:, :, : opt.channels]
-        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)
+        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)[:,:,::-1]
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
     print("========================")
@@ -266,10 +266,10 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
             from skimage.measure import compare_ssim
     
         if filetype=='npy':
-            img1 = np.load(inp)*255
+            img1 = np.load(inp)*255.0
         else:
             img1 = cv2.imread(inp)[:, :, : opt.channels]
-        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)
+        img2 = cv2.imread(argref)[:, :, : opt.channels].astype(img1.dtype)[:,:,::-1]
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
     print("========================")
