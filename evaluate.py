@@ -226,8 +226,10 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
             from skimage.metrics import structural_similarity as compare_ssim
         except Exception:
             from skimage.measure import compare_ssim
-    
-        img1 = cv2.imread(inp)[:, :, : opt.channels]
+        if filetype=='npy':
+            img1 = np.load(inp)*255
+        else:
+            img1 = cv2.imread(inp)[:, :, : opt.channels]
         img2 = cv2.imread(argref)[:, :, : opt.channels]
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
@@ -257,7 +259,10 @@ def main_eva(seed, model_name, trainset, testset, imgw=None, verbose=0, image_pa
         except Exception:
             from skimage.measure import compare_ssim
     
-        img1 = cv2.imread(inp)[:, :, : opt.channels]
+        if filetype=='npy':
+            img1 = np.load(inp)*255
+        else:
+            img1 = cv2.imread(inp)[:, :, : opt.channels]
         img2 = cv2.imread(argref)[:, :, : opt.channels]
         (score, diff) = compare_ssim(img1, img2, full=True, multichannel=True)
         print("Original ", cv2.PSNR(img1, img2), score)
